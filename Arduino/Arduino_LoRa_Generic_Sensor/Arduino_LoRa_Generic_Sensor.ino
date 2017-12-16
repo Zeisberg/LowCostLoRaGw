@@ -1,3 +1,4 @@
+
 /*
  *  Demonstration of generic sensors with the LoRa gateway
  *
@@ -22,21 +23,25 @@
  * nicolas.bertuol@etud.univ-pau.fr
  * 
  * last update: Nov. 26th by C. Pham
+ * update with freq cnt sensor for capacitive soil moisture: 2017-12-13 by S. Zeisberg
  */
 #include <SPI.h> 
 // Include the SX1272
 #include "SX1272.h"
 // Include sensors
 #include "Sensor.h"
-#include "DHT22_Humidity.h"
-#include "DHT22_Temperature.h"
-#include "LeafWetness.h"
-#include "LM35.h"
+// #include "DHT22_Humidity.h"
+// #include "DHT22_Temperature.h"
+// #include "LeafWetness.h"
+// #include "LM35.h"
 //#include <OneWire.h>
-#include "DS18B20.h"
+// #include "DS18B20.h"
 #include "rawAnalog.h"
-#include "HCSR04.h"
-#include "HRLV.h"
+// #include "HCSR04.h"
+// #include "HRLV.h"
+#include "FreqCntSoilMoisture.h"
+#include "SHT1X_Humidity.h"
+#include "SHT1X_Temperature.h"
 
 // IMPORTANT
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +123,7 @@ uint8_t node_addr=13;
 
 ///////////////////////////////////////////////////////////////////
 // CHANGE HERE THE TIME IN MINUTES BETWEEN 2 READING & TRANSMISSION
-unsigned int idlePeriodInMin = 10;
+unsigned int idlePeriodInMin = 1; // default is 10
 ///////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////
@@ -248,7 +253,7 @@ long getCmdValue(int &i, char* strBuff=NULL) {
 // SENSORS DEFINITION 
 //////////////////////////////////////////////////////////////////
 // CHANGE HERE THE NUMBER OF SENSORS, SOME CAN BE NOT CONNECTED
-const int number_of_sensors = 8;
+const int number_of_sensors = 4; //was 8
 //////////////////////////////////////////////////////////////////
 
 // array containing sensors pointers
@@ -284,17 +289,20 @@ void setup()
 //////////////////////////////////////////////////////////////////
 // ADD YOUR SENSORS HERE   
 // Sensor(nomenclature, is_analog, is_connected, is_low_power, pin_read, pin_power, pin_trigger=-1)
-  sensor_ptrs[0] = new LM35("tc", IS_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) A0, (uint8_t) 8);
-  sensor_ptrs[1] = new DHT22_Temperature("TC", IS_NOT_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) 3, (uint8_t) 9);
-  sensor_ptrs[2] = new DHT22_Humidity("HU", IS_NOT_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) 3, (uint8_t) 9);
-  sensor_ptrs[3] = new LeafWetness("lw", IS_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) A2, (uint8_t) 7);
-  sensor_ptrs[4] = new DS18B20("DS", IS_NOT_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) 4, (uint8_t) 7);
-  sensor_ptrs[5] = new rawAnalog("SH", IS_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) A1, (uint8_t) 6);
-  sensor_ptrs[6] = new HCSR04("DIS", IS_NOT_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) 39, (uint8_t) 41, (uint8_t) 40);
-  sensor_ptrs[7] = new HRLV("DIS_", IS_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) A3, (uint8_t) 5);
-  
+ // sensor_ptrs[0] = new LM35("tc", IS_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) A0, (uint8_t) 8);
+ // sensor_ptrs[1] = new DHT22_Temperature("TC", IS_NOT_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) 3, (uint8_t) 9);
+ // sensor_ptrs[2] = new DHT22_Humidity("HU", IS_NOT_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) 3, (uint8_t) 9);
+ // sensor_ptrs[3] = new LeafWetness("lw", IS_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) A2, (uint8_t) 7);
+ // sensor_ptrs[4] = new DS18B20("DS", IS_NOT_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) 4, (uint8_t) 7);
+ // sensor_ptrs[5] = new rawAnalog("SMR0", IS_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) A0, (uint8_t) A1);
+ // sensor_ptrs[6] = new HCSR04("DIS", IS_NOT_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) 39, (uint8_t) 41, (uint8_t) 40);
+ // sensor_ptrs[7] = new HRLV("DIS_", IS_ANALOG, IS_NOT_CONNECTED, low_power_status, (uint8_t) A3, (uint8_t) 5);
+  sensor_ptrs[0] = new rawAnalog("SMR1", IS_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) A0, (uint8_t) A1);
+  sensor_ptrs[1] = new FreqCntSoilMoisture("SMC", IS_NOT_ANALOG, IS_CONNECTED, low_power_status, (uint8_t) 5, (uint8_t) 3); 
+  sensor_ptrs[2] = new SHT1X_Temperature("SHTC", IS_NOT_ANALOG, IS_CONNECTED, IS_NOT_LOWPOWER, (uint8_t) 8, (uint8_t) 7);
+  sensor_ptrs[3] = new SHT1X_Humidity("SHTU", IS_NOT_ANALOG, IS_CONNECTED, IS_NOT_LOWPOWER, (uint8_t) 8, (uint8_t) 7);
   // for non connected sensors, indicate whether you want some fake data, for test purposes for instance
-  sensor_ptrs[3]->set_fake_data(true);
+  //sensor_ptrs[1]->set_fake_data(true);
   //sensor_ptrs[4]->set_fake_data(true); 
 
 //////////////////////////////////////////////////////////////////  
